@@ -1,98 +1,157 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
 import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { auth } from '@/config/firebase';
+import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useApplication } from '@/hooks/useApplication';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { signOut } from 'firebase/auth';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
+  const { user } = useAuth();
+  const { application, loading, startApplication, fetchApplication } = useApplication();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    signOut(auth);
+  };
+
+  const handleStart = async () => {
+    await startApplication();
+    router.push('/application/1');
+  };
+
+  const handleContinue = () => {
+    router.push('/application/1');
+  };
+
+  const handleView = () => {
+    router.push('/application/1');
+  };
+
+  const backgroundColor = useThemeColor({}, 'background');
+  const cardColor = useThemeColor({}, 'card');
+
+  if (loading) {
+    return <View style={[styles.center, { backgroundColor }]}><ActivityIndicator size="large" /></View>;
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <View>
+            <ThemedText type="title">Welcome, {user?.email?.split('@')[0]}!</ThemedText>
+            <HelloWave />
+          </View>
+          <TouchableOpacity onPress={() => startApplication()} style={{ padding: 8 }}>
+            <Ionicons name="refresh" size={24} color={Colors.light.tint} />
+          </TouchableOpacity>
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <View style={[styles.card, { backgroundColor: cardColor, borderColor: backgroundColor }]}>
+          <ThemedText type="subtitle" style={styles.cardTitle}>Application Status</ThemedText>
+          <View style={[styles.statusBadge,
+          application?.status === 'submitted' ? styles.statusSuccess :
+            application?.status === 'draft' ? styles.statusWarning : styles.statusNeutral]}>
+            <Text style={styles.statusText}>
+              {application?.status ? application.status.toUpperCase().replace('_', ' ') : 'NOT STARTED'}
+            </Text>
+          </View>
+          {application?.status === 'submitted' && (
+            <Text style={styles.appNumber}>Application #: {application.officeUse?.applicationNumber}</Text>
+          )}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: '#FF9500', marginBottom: 20 }]}
+          onPress={fetchApplication}
+        >
+          <Ionicons name="refresh-circle-outline" size={24} color="#fff" />
+          <Text style={styles.btnText}>Reload Data</Text>
+        </TouchableOpacity>
+
+        <View style={styles.actionContainer}>
+          {(!application || application.status === 'not_started') && (
+            <TouchableOpacity style={[styles.button, styles.primaryBtn]} onPress={handleStart}>
+              <Ionicons name="add-circle-outline" size={24} color="#fff" />
+              <Text style={styles.btnText}>Start Application</Text>
+            </TouchableOpacity>
+          )}
+
+          {application?.status === 'draft' && (
+            <TouchableOpacity style={[styles.button, styles.primaryBtn]} onPress={handleContinue}>
+              <Ionicons name="arrow-forward-circle-outline" size={24} color="#fff" />
+              <Text style={styles.btnText}>Continue Application</Text>
+            </TouchableOpacity>
+          )}
+
+          {application?.status === 'submitted' && (
+            <TouchableOpacity style={[styles.button, styles.secondaryBtn]} onPress={handleView}>
+              <Ionicons name="eye-outline" size={24} color="#fff" />
+              <Text style={styles.btnText}>View Submitted Application</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView >
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: { flex: 1, backgroundColor: '#fff' },
+  scrollContent: { padding: 20 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 30 },
+  card: {
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor: '#eee'
+  },
+  cardTitle: { marginBottom: 12 },
+  statusBadge: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    minWidth: 120,
+    alignItems: 'center'
+  },
+  statusNeutral: { backgroundColor: '#6c757d' },
+  statusWarning: { backgroundColor: '#ffc107' },
+  statusSuccess: { backgroundColor: '#28a745' },
+  statusText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  appNumber: { marginTop: 12, fontSize: 16, fontWeight: '600', color: '#333' },
+  actionContainer: { gap: 16 },
+  button: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    padding: 18,
+    borderRadius: 12,
+    gap: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  primaryBtn: { backgroundColor: '#007AFF' },
+  secondaryBtn: { backgroundColor: '#5856D6' },
+  btnText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  logoutBtn: { marginTop: 40, padding: 16, alignItems: 'center' },
+  logoutText: { color: '#dc3545', fontSize: 16, fontWeight: '500' }
 });
+
+
