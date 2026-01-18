@@ -1,3 +1,4 @@
+import { useThemeColor } from '@/hooks/use-theme-color';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import React from 'react';
@@ -15,11 +16,9 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ccc',
         padding: 12,
         borderRadius: 8,
         fontSize: 16,
-        backgroundColor: '#fff',
     },
     inputError: {
         borderColor: 'red',
@@ -31,9 +30,7 @@ const styles = StyleSheet.create({
     },
     pickerContainer: {
         borderWidth: 1,
-        borderColor: '#ccc',
         borderRadius: 8,
-        backgroundColor: '#fff',
         overflow: 'hidden', // for iOS picker radius
     },
 });
@@ -51,6 +48,11 @@ interface FormInputProps {
 }
 
 export const FormInput = ({ control, name, label, placeholder, rules, secureTextEntry, keyboardType, editable = true, multiline = false }: FormInputProps) => {
+    const backgroundColor = useThemeColor({}, 'card');
+    const textColor = useThemeColor({}, 'text');
+    const borderColor = useThemeColor({}, 'icon');
+    const placeholderColor = useThemeColor({}, 'icon');
+
     return (
         <Controller
             control={control}
@@ -60,7 +62,11 @@ export const FormInput = ({ control, name, label, placeholder, rules, secureText
                 <View style={styles.container}>
                     {label && <ThemedText type="defaultSemiBold" style={styles.label}>{label}</ThemedText>}
                     <TextInput
-                        style={[styles.input, error && styles.inputError, !editable && { backgroundColor: '#f0f0f0', color: '#666' }]}
+                        style={[
+                            styles.input,
+                            { backgroundColor, color: textColor, borderColor: error ? 'red' : borderColor },
+                            !editable && { opacity: 0.7 }
+                        ]}
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}
@@ -69,7 +75,7 @@ export const FormInput = ({ control, name, label, placeholder, rules, secureText
                         keyboardType={keyboardType}
                         editable={editable}
                         multiline={multiline}
-                        placeholderTextColor="#999"
+                        placeholderTextColor={placeholderColor}
                     />
                     {error && <Text style={styles.errorText}>{error.message || 'Required'}</Text>}
                 </View>
@@ -88,6 +94,10 @@ interface FormSelectProps {
 }
 
 export const FormSelect = ({ control, name, label, items, rules, enabled = true }: FormSelectProps) => {
+    const backgroundColor = useThemeColor({}, 'card');
+    const textColor = useThemeColor({}, 'text');
+    const borderColor = useThemeColor({}, 'icon');
+
     return (
         <Controller
             control={control}
@@ -96,16 +106,21 @@ export const FormSelect = ({ control, name, label, items, rules, enabled = true 
             render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <View style={styles.container}>
                     {label && <ThemedText type="defaultSemiBold" style={styles.label}>{label}</ThemedText>}
-                    <View style={[styles.pickerContainer, error && styles.inputError]}>
+                    <View style={[
+                        styles.pickerContainer,
+                        { backgroundColor, borderColor: error ? 'red' : borderColor }
+                    ]}>
                         <Picker
                             selectedValue={value}
                             onValueChange={onChange}
                             enabled={enabled}
-                            style={Platform.OS === 'android' ? { height: 50, width: '100%' } : {}}
+                            style={Platform.OS === 'android' ? { height: 50, width: '100%', color: textColor } : {}}
+                            itemStyle={{ color: textColor }}
+                            dropdownIconColor={textColor}
                         >
-                            <Picker.Item label="Select..." value="" color="#999" />
+                            <Picker.Item label="Select..." value="" color={borderColor} />
                             {items.map((item) => (
-                                <Picker.Item key={item.value} label={item.label} value={item.value} />
+                                <Picker.Item key={item.value} label={item.label} value={item.value} color={textColor} />
                             ))}
                         </Picker>
                     </View>
@@ -125,6 +140,10 @@ interface DatePickerProps {
 
 export const DatePickerInput = ({ control, name, label, rules }: DatePickerProps) => {
     const [show, setShow] = React.useState(false);
+    const backgroundColor = useThemeColor({}, 'card');
+    const textColor = useThemeColor({}, 'text');
+    const borderColor = useThemeColor({}, 'icon');
+    const placeholderColor = useThemeColor({}, 'icon');
 
     return (
         <Controller
@@ -146,9 +165,12 @@ export const DatePickerInput = ({ control, name, label, rules }: DatePickerProps
                         <ThemedText type="defaultSemiBold" style={styles.label}>{label}</ThemedText>
                         <TouchableOpacity
                             onPress={() => setShow(true)}
-                            style={[styles.input, error && styles.inputError, { justifyContent: 'center' }]}
+                            style={[
+                                styles.input,
+                                { backgroundColor, borderColor: error ? 'red' : borderColor, justifyContent: 'center' }
+                            ]}
                         >
-                            <ThemedText style={{ color: value ? '#000' : '#999' }}>
+                            <ThemedText style={{ color: value ? textColor : placeholderColor }}>
                                 {value ? new Date(value).toLocaleDateString() : 'Select Date'}
                             </ThemedText>
                         </TouchableOpacity>

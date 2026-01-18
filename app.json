@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "project-rifa",
-    "slug": "project-rifa",
+    "name": "YEN-AdmiGo",
+    "slug": "yen-admigo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -48,6 +48,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0aaea4d4-6ed1-47c8-9164-947a8c5ae515"
+      }
+    },
+    "owner": "samdev420"
   }
 }
